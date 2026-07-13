@@ -216,3 +216,12 @@ run.sh
 start_multi_eval.sh
 trash/
 eval.sh
+# --- HELIX VLA+Motus migration: ignore data/models/logs/legacy artifacts ---
+lingbot-vla-4b-posttrain-robotwin/
+residual_data/
+recovery_rollouts/
+logs/
+1.py
+*.pt
+*.npz
+*.mp4

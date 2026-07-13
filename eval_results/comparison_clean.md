@@ -1,0 +1,74 @@
+# RoboTwin demo_clean 评测对照表
+
+生成时间: 2026-06-17 13:50:29
+
+5列：Motus(paper) | LingBot-VA(paper 92.9%) | AIM(paper) | LingBot-VLA(paper posttrain) | 我们的运行
+
+| 任务 | Motus (paper, Easy/Clean) | LingBot-VA (paper, 92.9%) | AIM (paper Table 1 Ours, Easy) | LingBot-VLA (paper, posttrain) | LingBot-VLA (repro) | WRM clean (skip, steps=10) | WRMUnd clean (denoise50, full WAN, fast 8gpu) | WRM clean wrm (denoise, steps=50, fast 8gpu) | WRMUnd zero_v1 (denoise50, τ=0.7 relabel) |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| adjust_bottle | 89% | 90% | 100% | 100% | 98.0% | 63.0% | 99.0% | 97.0% | 97.0% |
+| beat_block_hammer | 95% | 96% | 100% | 87% | 86.0% | 33.0% | 73.0% | 83.0% | 83.0% |
+| blocks_ranking_rgb | 99% | 99% | 92% | 92% | 95.0% | 8.0% | 3.0% | 68.0% | 68.0% |
+| blocks_ranking_size | 75% | 94% | 47% | 66% | 79.0% | 25.0% | 72.0% | 70.0% | 70.0% |
+| click_alarmclock | 100% | 99% | 100% | 93% | 56.0% | 81.0% | 86.0% | 85.0% | 85.0% |
+| click_bell | 100% | 100% | 100% | 32% | 54.0% | 71.0% | 82.0% | 82.0% | 82.0% |
+| dump_bin_bigbin | 95% | 89% | 100% | 97% | 97.0% | 78.0% | 91.0% | 96.0% | 96.0% |
+| grab_roller | 100% | 100% | 100% | 100% | 99.0% | 96.0% | 100.0% | 99.0% | 99.0% |
+| handover_block | 86% | 99% | 93% | 80% | 88.0% | 36.0% | 53.0% | 79.0% | 79.0% |
+| handover_mic | 78% | 94% | 83% | 94% | 97.0% | 80.0% | 95.0% | 91.0% | 91.0% |
+| hanging_mug | 38% | 40% | 43% | 32% | 63.0% | 42.0% | 50.0% | 57.0% | 57.0% |
+| lift_pot | 96% | 100% | 100% | 100% | 100.0% | 86.0% | 100.0% | 99.0% | 99.0% |
+| move_can_pot | 34% | 94% | 100% | 79% | 75.0% | 38.0% | 70.0% | 78.0% | 78.0% |
+| move_pillbottle_pad | 93% | 99% | 97% | 93% | 97.0% | 46.0% | 94.0% | 95.0% | 95.0% |
+| move_playingcard_away | 100% | 100% | 100% | 96% | 100.0% | 45.0% | 100.0% | 99.0% | 99.0% |
+| move_stapler_pad | 83% | 91% | 92% | 74% | 65.0% | 27.0% | 69.0% | 82.0% | 82.0% |
+| open_laptop | 95% | 92% | 100% | 96% | 96.0% | 80.0% | 98.0% | 98.0% | 98.0% |
+| open_microwave | 95% | 82% | 83% | 91% | 81.0% | 65.0% | 64.0% | 63.0% | 63.0% |
+| pick_diverse_bottles | 90% | 89% | 100% | 79% | 83.0% | 49.0% | 77.0% | 74.0% | 74.0% |
+| pick_dual_bottles | 96% | 100% | 93% | 82% | 95.0% | 48.0% | 77.0% | 86.0% | 86.0% |
+| place_a2b_left | 82% | 97% | 94% | 86% | 84.0% | 55.0% | 84.0% | 85.0% | 85.0% |
+| place_a2b_right | 90% | 97% | 90% | 74% | 80.0% | 51.0% | 76.0% | 80.0% | 80.0% |
+| place_bread_basket | 91% | 97% | 93% | 92% | 89.0% | 65.0% | 78.0% | 84.0% | 84.0% |
+| place_bread_skillet | 86% | 95% | 100% | 90% | 91.0% | 53.0% | 88.0% | 90.0% | 90.0% |
+| place_burger_fries | 98% | 97% | 100% | 95% | 97.0% | 95.0% | 94.0% | 99.0% | 99.0% |
+| place_can_basket | 81% | 81% | 78% | 68% | 69.0% | 44.0% | 69.0% | 62.0% | 62.0% |
+| place_cans_plasticbox | 98% | 100% | 100% | 97% | 99.0% | 89.0% | 97.0% | 100.0% | 100.0% |
+| place_container_plate | 98% | 99% | 100% | 99% | 98.0% | 94.0% | 100.0% | 98.0% | 98.0% |
+| place_dual_shoes | 93% | 94% | 100% | 80% | 81.0% | 37.0% | 85.0% | 89.0% | 89.0% |
+| place_empty_cup | 99% | 100% | 100% | 100% | 100.0% | 85.0% | 100.0% | 100.0% | 100.0% |
+| place_fan | 91% | 99% | 93% | 91% | 93.0% | 48.0% | 87.0% | 89.0% | 89.0% |
+| place_mouse_pad | 66% | 93% | 97% | 82% | 79.0% | 38.0% | 90.0% | 77.0% | 77.0% |
+| place_object_basket | 81% | 91% | 93% | 90% | 92.0% | 58.0% | 82.0% | 84.0% | 84.0% |
+| place_object_scale | 88% | 96% | 100% | 84% | 87.0% | 50.0% | 78.0% | 84.0% | 84.0% |
+| place_object_stand | 98% | 99% | 100% | 97% | 93.0% | 71.0% | 91.0% | 92.0% | 92.0% |
+| place_phone_stand | 87% | 97% | 82% | 92% | 92.0% | 61.0% | 92.0% | 87.0% | 87.0% |
+| place_shoe | 99% | 98% | 100% | 99% | 97.0% | 66.0% | 97.0% | 100.0% | 100.0% |
+| press_stapler | 93% | 85% | 96% | 90% | 94.0% | 78.0% | 89.0% | 94.0% | 94.0% |
+| put_bottles_dustbin | 81% | 87% | 80% | 88% | 87.0% | 58.0% | 64.0% | 77.0% | 77.0% |
+| put_object_cabinet | 88% | 85% | 81% | 92% | 87.0% | 49.0% | 85.0% | 86.0% | 86.0% |
+| rotate_qrcode | 89% | 96% | 100% | 93% | 87.0% | 70.0% | 79.0% | 83.0% | 83.0% |
+| scan_object | 67% | 96% | 100% | 91% | 94.0% | 48.0% | 90.0% | 93.0% | 93.0% |
+| shake_bottle | 100% | 100% | 100% | 99% | 100.0% | 83.0% | 98.0% | 100.0% | 100.0% |
+| shake_bottle_horizontally | 100% | 100% | 100% | 100% | 100.0% | 80.0% | 100.0% | 100.0% | 100.0% |
+| stack_blocks_three | 91% | 99% | 100% | 92% | 95.0% | 0.0% | 0.0% | 59.0% | 59.0% |
+| stack_blocks_two | 100% | 100% | 100% | 100% | 99.0% | 2.0% | 4.0% | 99.0% | 99.0% |
+| stack_bowls_three | 79% | 86% | 100% | 72% | 80.0% | 69.0% | 74.0% | 78.0% | 78.0% |
+| stack_bowls_two | 98% | 94% | 100% | 92% | 96.0% | 86.0% | 92.0% | 92.0% | 92.0% |
+| stamp_seal | 93% | 96% | 100% | 76% | 87.0% | 35.0% | 70.0% | 80.0% | 80.0% |
+| turn_switch | 84% | 44% | 100% | 61% | 65.0% | 45.0% | 77.0% | 65.0% | 65.0% |
+| **macro** | **88.5%** | **92.9%** | **94.0%** | **86.5%** | **87.9%** | **57.2%** | **79.3%** | **85.7%** | **85.7%** |
+
+## 论文参考来源
+
+- **Motus (paper, Easy/Clean)** (`motus_clean`): LingBot-VLA arxiv:2601.21998 Table S1; AIM arxiv:2604.11135 Table 1 (Motus column, Easy)
+- **LingBot-VA (paper, 92.9%)** (`lingbot_s1_ours_clean`): LingBot-VLA arxiv:2601.21998 Table S1, Ours column Easy
+- **AIM (paper Table 1 Ours, Easy)** (`aim_clean`): AIM arxiv:2604.11135 Table 1, AIM (Ours) column Easy
+- **LingBot-VLA (paper, posttrain)** (`lingbot_s7_wo_clean`): LingBot-VLA arxiv:2601.21998 Table S7, Ours w/o depth Clean (released posttrain ckpt)
+
+## 我们的运行记录
+
+- `lingbot_repro_20260605` (complete): /mnt/data/yyg/lingbot-vla/logs/robotwin_easy_fast_20260605_165702 — micro 87.9%
+- `wrm_clean_wrm_skip10` (complete): /mnt/data14/yyg/lingbot-vla/logs/robotwin_wrm_fast_clean_wrm_20260606_233103 — micro 57.2%
+- `wrm_und_clean_wrm_denoise50` (complete): /mnt/data/yyg/lingbot-vla/logs/robotwin_wrm_fast_clean_wrm_20260611_144152 — micro 79.3%
+- `wrm_clean_wrm_denoise50` (complete): /mnt/data14/yyg/lingbot-vla/logs/robotwin_wrm_fast_clean_wrm_20260615_131731 — micro 85.7%
+- `wrm_und_zero_v1_clean_denoise50` (complete): /mnt/data/yyg/lingbot-vla/logs/robotwin_wrm_fast_clean_wrm_20260615_131731 — micro 85.7%

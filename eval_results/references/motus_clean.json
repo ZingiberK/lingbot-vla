@@ -1,0 +1,26 @@
+{
+  "ref_id": "motus_clean",
+  "name": "Motus (paper, Easy/Clean)",
+  "source": "LingBot-VLA arxiv:2601.21998 Table S1; AIM arxiv:2604.11135 Table 1 (Motus column, Easy)",
+  "arxiv": "2512.13030",
+  "split": "demo_clean",
+  "per_task": {
+    "adjust_bottle": 89, "beat_block_hammer": 95, "blocks_ranking_rgb": 99,
+    "blocks_ranking_size": 75, "click_alarmclock": 100, "click_bell": 100,
+    "dump_bin_bigbin": 95, "grab_roller": 100, "handover_block": 86,
+    "handover_mic": 78, "hanging_mug": 38, "lift_pot": 96,
+    "move_can_pot": 34, "move_pillbottle_pad": 93, "move_playingcard_away": 100,
+    "move_stapler_pad": 83, "open_laptop": 95, "open_microwave": 95,
+    "pick_diverse_bottles": 90, "pick_dual_bottles": 96, "place_a2b_left": 82,
+    "place_a2b_right": 90, "place_bread_basket": 91, "place_bread_skillet": 86,
+    "place_burger_fries": 98, "place_can_basket": 81, "place_cans_plasticbox": 98,
+    "place_container_plate": 98, "place_dual_shoes": 93, "place_empty_cup": 99,
+    "place_fan": 91, "place_mouse_pad": 66, "place_object_basket": 81,
+    "place_object_scale": 88, "place_object_stand": 98, "place_phone_stand": 87,
+    "place_shoe": 99, "press_stapler": 93, "put_bottles_dustbin": 81,
+    "put_object_cabinet": 88, "rotate_qrcode": 89, "scan_object": 67,
+    "shake_bottle": 100, "shake_bottle_horizontally": 100,
+    "stack_blocks_three": 91, "stack_blocks_two": 100, "stack_bowls_three": 79,
+    "stack_bowls_two": 98, "stamp_seal": 93, "turn_switch": 84
+  }
+}

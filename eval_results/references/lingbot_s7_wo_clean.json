@@ -1,0 +1,26 @@
+{
+  "ref_id": "lingbot_s7_wo_clean",
+  "name": "LingBot-VLA (paper, posttrain)",
+  "source": "LingBot-VLA arxiv:2601.21998 Table S7, Ours w/o depth Clean (released posttrain ckpt)",
+  "arxiv": "2601.21998",
+  "split": "demo_clean",
+  "per_task": {
+    "adjust_bottle": 100, "beat_block_hammer": 87, "blocks_ranking_rgb": 92,
+    "blocks_ranking_size": 66, "click_alarmclock": 93, "click_bell": 32,
+    "dump_bin_bigbin": 97, "grab_roller": 100, "handover_block": 80,
+    "handover_mic": 94, "hanging_mug": 32, "lift_pot": 100,
+    "move_can_pot": 79, "move_pillbottle_pad": 93, "move_playingcard_away": 96,
+    "move_stapler_pad": 74, "open_laptop": 96, "open_microwave": 91,
+    "pick_diverse_bottles": 79, "pick_dual_bottles": 82, "place_a2b_left": 86,
+    "place_a2b_right": 74, "place_bread_basket": 92, "place_bread_skillet": 90,
+    "place_burger_fries": 95, "place_can_basket": 68, "place_cans_plasticbox": 97,
+    "place_container_plate": 99, "place_dual_shoes": 80, "place_empty_cup": 100,
+    "place_fan": 91, "place_mouse_pad": 82, "place_object_basket": 90,
+    "place_object_scale": 84, "place_object_stand": 97, "place_phone_stand": 92,
+    "place_shoe": 99, "press_stapler": 90, "put_bottles_dustbin": 88,
+    "put_object_cabinet": 92, "rotate_qrcode": 93, "scan_object": 91,
+    "shake_bottle": 99, "shake_bottle_horizontally": 100,
+    "stack_blocks_three": 92, "stack_blocks_two": 100, "stack_bowls_three": 72,
+    "stack_bowls_two": 92, "stamp_seal": 76, "turn_switch": 61
+  }
+}

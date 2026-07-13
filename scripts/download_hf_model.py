@@ -13,6 +13,12 @@ if __name__ == "__main__":
     parser.add_argument("--repo_id", type=str, default="deepseek-ai/Janus-1.3B")
     parser.add_argument("--local_dir", type=str, default="./Janus-1.3B")
     parser.add_argument("--local_dir_use_symlinks", type=bool, default=False)
+    parser.add_argument(
+        "--max-workers",
+        type=int,
+        default=8,
+        help="Parallel download threads (use 1 to limit bandwidth/IO contention).",
+    )
     args = parser.parse_args()
 
     repo_id = args.repo_id
@@ -23,4 +29,5 @@ if __name__ == "__main__":
         repo_id=repo_id,
         local_dir=os.path.join(local_dir, repo_id.split("/")[1]),
         local_dir_use_symlinks=local_dir_use_symlinks,
+        max_workers=args.max_workers,
     )

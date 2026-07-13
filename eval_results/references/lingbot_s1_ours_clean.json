@@ -1,0 +1,26 @@
+{
+  "ref_id": "lingbot_s1_ours_clean",
+  "name": "LingBot-VA (paper, 92.9%)",
+  "source": "LingBot-VLA arxiv:2601.21998 Table S1, Ours column Easy",
+  "arxiv": "2601.21998",
+  "split": "demo_clean",
+  "per_task": {
+    "adjust_bottle": 90, "beat_block_hammer": 96, "blocks_ranking_rgb": 99,
+    "blocks_ranking_size": 94, "click_alarmclock": 99, "click_bell": 100,
+    "dump_bin_bigbin": 89, "grab_roller": 100, "handover_block": 99,
+    "handover_mic": 94, "hanging_mug": 40, "lift_pot": 100,
+    "move_can_pot": 94, "move_pillbottle_pad": 99, "move_playingcard_away": 100,
+    "move_stapler_pad": 91, "open_laptop": 92, "open_microwave": 82,
+    "pick_diverse_bottles": 89, "pick_dual_bottles": 100, "place_a2b_left": 97,
+    "place_a2b_right": 97, "place_bread_basket": 97, "place_bread_skillet": 95,
+    "place_burger_fries": 97, "place_can_basket": 81, "place_cans_plasticbox": 100,
+    "place_container_plate": 99, "place_dual_shoes": 94, "place_empty_cup": 100,
+    "place_fan": 99, "place_mouse_pad": 93, "place_object_basket": 91,
+    "place_object_scale": 96, "place_object_stand": 99, "place_phone_stand": 97,
+    "place_shoe": 98, "press_stapler": 85, "put_bottles_dustbin": 87,
+    "put_object_cabinet": 85, "rotate_qrcode": 96, "scan_object": 96,
+    "shake_bottle": 100, "shake_bottle_horizontally": 100,
+    "stack_blocks_three": 99, "stack_blocks_two": 100, "stack_bowls_three": 86,
+    "stack_bowls_two": 94, "stamp_seal": 96, "turn_switch": 44
+  }
+}
