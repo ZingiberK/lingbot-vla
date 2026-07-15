@@ -8,12 +8,14 @@
 #     target              : [n_chunk, 16, 14] float32  (a_vla raw qpos, stride-3 -> Motus grid)
 #     instruction         : scalar str
 #
-# Used to BC-finetune Motus's action expert (video/und frozen) toward VLA-stride3, then
-# re-test SDEdit low-t0 refine: does closing the manifold gap revive the blend? (Tier 1 §10)
+# Clean recollect (default): stop once TARGET_SUCCESS npz/task are saved (early-stop across
+# shards). Scan NUM_SEEDS feasible train seeds up-front (oversample low-SR tasks).
 #
-# All vla_zero (delta=0), NO SDE trace / NO futures / NO learner. Single round. 8-GPU sharded.
+#   # full clean recollect -> 100 success/task, new root
+#   RL_ROOT=/mnt/data14/yyg/wrm_rl_runs/motus_ft_v2 \
+#   TARGET_SUCCESS=100 NUM_SEEDS=180 \
+#   nohup bash scripts/collect_motus_ft.sh > logs/motus_ft_collect_v2.nohup.log 2>&1 &
 #
-#   nohup bash scripts/collect_motus_ft.sh > logs/motus_ft_collect.nohup.log 2>&1 &
 # Smoke (2 tasks, tiny):
 #   SMOKE=1 GPU=0 bash scripts/collect_motus_ft.sh
 
@@ -25,20 +27,20 @@ CONDA_BASE="${CONDA_BASE:-/mnt/data14/ccy/pip_packs/miniconda3}"
 FULL_TASKS="adjust_bottle beat_block_hammer blocks_ranking_rgb blocks_ranking_size \
 click_alarmclock click_bell dump_bin_bigbin grab_roller handover_block \
 handover_mic hanging_mug lift_pot move_can_pot move_pillbottle_pad \
-move_playingcard_away move_stapler_pad open_microwave \
+move_playingcard_away move_stapler_pad open_laptop open_microwave \
 pick_diverse_bottles pick_dual_bottles place_a2b_left place_a2b_right \
 place_bread_basket place_bread_skillet place_burger_fries place_can_basket \
 place_cans_plasticbox place_container_plate place_dual_shoes place_empty_cup \
-place_fan place_mouse_pad place_object_basket \
+place_fan place_mouse_pad place_object_basket place_object_scale \
 place_object_stand place_phone_stand place_shoe press_stapler \
-put_bottles_dustbin rotate_qrcode scan_object \
+put_bottles_dustbin put_object_cabinet rotate_qrcode scan_object \
 shake_bottle_horizontally shake_bottle stack_blocks_three stack_blocks_two \
 stack_bowls_three stack_bowls_two stamp_seal turn_switch"
-# NOTE: open_laptop / place_object_scale / put_object_cabinet dropped (RoboTwin env
-# arm_tag AttributeError -> 0 episodes). 47 tasks.
+# 50 tasks. open_laptop / place_object_scale / put_object_cabinet previously crashed in
+# sharded collect (arm_tag only set in play_once); fixed in envs/*.py load_actors.
 
 TASKS=(${TASKS:-${FULL_TASKS}})
-RL_ROOT="${RL_ROOT:-/mnt/data14/yyg/wrm_rl_runs/motus_ft}"
+RL_ROOT="${RL_ROOT:-/mnt/data14/yyg/wrm_rl_runs/motus_ft_v2}"
 INIT_CKPT="${INIT_CKPT:-/mnt/data14/yyg/Motus/runs/wrm_und_zero_v1/wrm_und_step040000.pt}"
 DELTA_STATS="${DELTA_STATS:-${ROOT}/residual_data/robotwin_full_clean_rand_und_zero/delta_norm_stats.json}"
 WAN_DIR="${WAN_DIR:-/mnt/data14/liuxiao/pretrained_models/Wan2.2-TI2V-5B}"
@@ -52,32 +54,39 @@ NGPU="${#GPU_ARR[@]}"
 PORT="${PORT:-8300}"
 
 ROUND=0
-# 50 distinct layouts/task, 1 rollout each (VLA ~88% SR -> ~44 success traj/task).
-# ~10 chunks/traj -> ~440 (frame,stride3-action) samples/task; ample for action-expert BC.
-NUM_SEEDS="${NUM_SEEDS:-50}"
+# Oversample seeds so low-SR tasks (e.g. click_bell ~58%) can still hit TARGET_SUCCESS.
+# Workers early-stop once TARGET_SUCCESS npz exist (high-SR tasks won't burn all seeds).
+TARGET_SUCCESS="${TARGET_SUCCESS:-100}"
+NUM_SEEDS="${NUM_SEEDS:-180}"
 GROUP_SIZE="${GROUP_SIZE:-1}"
 ETA="${ETA:-0.5}"          # unused for vla_zero (delta forced to 0), server still needs it
 RL_STEPS="${RL_STEPS:-10}"
+# scan is env/CPU bound — run more parallel than NGPU to shorten the seed-cache phase
+SCAN_PARALLEL="${SCAN_PARALLEL:-16}"
 
 if [[ "${SMOKE:-0}" == "1" ]]; then
   TASKS=(stack_blocks_three handover_block)
   GPUS="${GPU}"; IFS=',' read -r -a GPU_ARR <<< "${GPUS}"; NGPU="${#GPU_ARR[@]}"
-  NUM_SEEDS=3; GROUP_SIZE=1
-  echo "[SMOKE] tasks=${TASKS[*]} gpus=${GPUS} num_seeds=${NUM_SEEDS} group_size=${GROUP_SIZE}"
+  NUM_SEEDS=3; GROUP_SIZE=1; TARGET_SUCCESS=2; SCAN_PARALLEL=2
+  echo "[SMOKE] tasks=${TASKS[*]} gpus=${GPUS} num_seeds=${NUM_SEEDS} target=${TARGET_SUCCESS}"
 fi
 
-mkdir -p "${RL_ROOT}"
+mkdir -p "${RL_ROOT}" "${ROOT}/logs"
 source "${CONDA_BASE}/etc/profile.d/conda.sh"
 MAIN_LOG="${RL_ROOT}/orchestrator.log"
 log() { echo "[$(date '+%F %T')] $*" | tee -a "${MAIN_LOG}"; }
 
+count_ft() {
+  local task="$1"
+  local ft_dir="${RL_ROOT}/${task}/round${ROUND}/motus_ft"
+  [[ -d "${ft_dir}" ]] || { echo 0; return; }
+  find "${ft_dir}" -maxdepth 1 -name '*.npz' 2>/dev/null | wc -l
+}
+
 is_rollout_done() {
-  local task="$1" need n
-  need=$(( NUM_SEEDS * GROUP_SIZE ))
-  local ep_dir="${RL_ROOT}/${task}/round${ROUND}/episodes"
-  [[ -d "${ep_dir}" ]] || return 1
-  n=$(find "${ep_dir}" -maxdepth 1 -name '*.json' 2>/dev/null | wc -l)
-  [[ "${n}" -ge "${need}" ]]
+  local task="$1" n
+  n=$(count_ft "${task}")
+  [[ "${n}" -ge "${TARGET_SUCCESS}" ]]
 }
 
 wait_ws_ready() {
@@ -98,16 +107,23 @@ unpackb(c.recv()); c.close()
   log "ERROR: server not ready on :${port}"; return 1
 }
 
-log "MOTUS FT COLLECT | tasks=${#TASKS[@]} gpus=${GPUS}(N=${NGPU}) seeds=${NUM_SEEDS} G=${GROUP_SIZE} -> ${NUM_SEEDS}*${GROUP_SIZE}=$(( NUM_SEEDS*GROUP_SIZE ))/task | root=${RL_ROOT}"
+log "MOTUS FT COLLECT | tasks=${#TASKS[@]} gpus=${GPUS}(N=${NGPU}) seeds=${NUM_SEEDS} G=${GROUP_SIZE} target_success=${TARGET_SUCCESS} scan_parallel=${SCAN_PARALLEL} | root=${RL_ROOT}"
 
-# ---- 0) scan feasible train seeds once per task, NGPU parallel ----
+# ---- 0) scan feasible train seeds once per task (CPU/env; oversubscribe) ----
 conda activate RoboTwin
 export LINGBOT_VLA_ROOT="${ROOT}"
 cd "${ROBOTWIN_ROOT}"
 SCAN_PIDS=(); slot=0
 for task in "${TASKS[@]}"; do
   mkdir -p "${RL_ROOT}/${task}/round${ROUND}"
-  [[ -f "${RL_ROOT}/${task}/train_seeds.json" ]] && { log "seeds cached task=${task}"; continue; }
+  if [[ -f "${RL_ROOT}/${task}/train_seeds.json" ]]; then
+    n_cached=$(python -c "import json; print(len(json.load(open('${RL_ROOT}/${task}/train_seeds.json'))))")
+    if [[ "${n_cached}" -ge "${NUM_SEEDS}" ]]; then
+      log "seeds cached task=${task} n=${n_cached}"; continue
+    fi
+    log "seeds cache short task=${task} n=${n_cached}<${NUM_SEEDS}; rescan"
+    rm -f "${RL_ROOT}/${task}/train_seeds.json"
+  fi
   gpu="${GPU_ARR[$(( slot % NGPU ))]}"
   log "scan_only task=${task} gpu=${gpu} num_seeds=${NUM_SEEDS}"
   CUDA_VISIBLE_DEVICES="${gpu}" python script/rl_rollout_worker.py \
@@ -115,7 +131,7 @@ for task in "${TASKS[@]}"; do
     --num_seeds "${NUM_SEEDS}" --group_size "${GROUP_SIZE}" --scan_only \
     >> "${RL_ROOT}/${task}/round${ROUND}/scan_stdout.log" 2>&1 &
   SCAN_PIDS+=($!); slot=$(( slot + 1 ))
-  if (( ${#SCAN_PIDS[@]} >= NGPU )); then
+  if (( ${#SCAN_PIDS[@]} >= SCAN_PARALLEL )); then
     for pid in "${SCAN_PIDS[@]}"; do wait "${pid}" || log "WARN scan pid=${pid} nonzero"; done
     SCAN_PIDS=()
   fi
@@ -144,14 +160,17 @@ for (( g=0; g<NGPU; g++ )); do
     for pid in "${SERVER_PIDS[@]}"; do kill "${pid}" 2>/dev/null || true; done; exit 1; }
 done
 
-# ---- 2) RoboTwin rollout worker(s): NGPU shards in parallel per task (motus_ft_collect) ----
+# ---- 2) RoboTwin rollout worker(s): NGPU shards/task; early-stop at TARGET_SUCCESS ----
 conda activate RoboTwin
 export LINGBOT_VLA_ROOT="${ROOT}"
 cd "${ROBOTWIN_ROOT}"
 for task in "${TASKS[@]}"; do
-  if is_rollout_done "${task}"; then log "SKIP done task=${task}"; continue; fi
+  if is_rollout_done "${task}"; then
+    log "SKIP done task=${task} motus_ft=$(count_ft "${task}")>=${TARGET_SUCCESS}"
+    continue
+  fi
   mkdir -p "${RL_ROOT}/${task}/round${ROUND}"
-  log "collect task=${task} shards=${NGPU} (motus_ft_collect)"
+  log "collect task=${task} shards=${NGPU} target_success=${TARGET_SUCCESS} (motus_ft_collect)"
   WPIDS=()
   for (( g=0; g<NGPU; g++ )); do
     p=$(( PORT + g )); gpu="${GPU_ARR[$g]}"
@@ -160,7 +179,7 @@ for task in "${TASKS[@]}"; do
       --rl_root "${RL_ROOT}" --round "${ROUND}" \
       --num_seeds "${NUM_SEEDS}" --group_size "${GROUP_SIZE}" \
       --shard_id "${g}" --num_shards "${NGPU}" --save_futures false \
-      --motus_ft_collect \
+      --motus_ft_collect --target_success "${TARGET_SUCCESS}" \
       >> "${RL_ROOT}/${task}/round${ROUND}/worker_shard${g}_stdout.log" 2>&1 &
     WPIDS+=($!)
   done
@@ -168,8 +187,12 @@ for task in "${TASKS[@]}"; do
   for pid in "${WPIDS[@]}"; do wait "${pid}" || FAIL=1; done
   [[ "${FAIL}" == "1" ]] && log "WARN task=${task} had a worker shard return nonzero"
   ndone=$(find "${RL_ROOT}/${task}/round${ROUND}/episodes" -maxdepth 1 -name '*.json' 2>/dev/null | wc -l)
-  nft=$(find "${RL_ROOT}/${task}/round${ROUND}/motus_ft" -maxdepth 1 -name '*.npz' 2>/dev/null | wc -l)
-  log "task=${task} DONE episodes=${ndone} motus_ft=${nft}"
+  nft=$(count_ft "${task}")
+  if [[ "${nft}" -lt "${TARGET_SUCCESS}" ]]; then
+    log "WARN task=${task} SHORT episodes=${ndone} motus_ft=${nft}<${TARGET_SUCCESS} (raise NUM_SEEDS & rescan)"
+  else
+    log "task=${task} DONE episodes=${ndone} motus_ft=${nft}"
+  fi
 done
 
 # ---- 3) stop server(s) ----
@@ -180,4 +203,12 @@ done
 # ---- 4) final tally ----
 TOT_EP=$(find "${RL_ROOT}" -path '*/round0/episodes/*.json' 2>/dev/null | wc -l)
 TOT_FT=$(find "${RL_ROOT}" -path '*/round0/motus_ft/*.npz' 2>/dev/null | wc -l)
-log "ALL DONE. total_episodes=${TOT_EP} total_motus_ft_traj=${TOT_FT} root=${RL_ROOT}"
+SHORT=0
+for task in "${TASKS[@]}"; do
+  nft=$(count_ft "${task}")
+  if [[ "${nft}" -lt "${TARGET_SUCCESS}" ]]; then
+    log "SHORT task=${task} motus_ft=${nft}"
+    SHORT=$(( SHORT + 1 ))
+  fi
+done
+log "ALL DONE. total_episodes=${TOT_EP} total_motus_ft_traj=${TOT_FT} short_tasks=${SHORT} root=${RL_ROOT}"
