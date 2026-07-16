@@ -91,7 +91,11 @@ conda activate "${ROBOTWIN_ENV}"
 cd "${ROBOTWIN_ROOT}"
 for task in "${TASKS[@]}"; do
   # Skip tasks already at target (resumable across restarts).
-  have=$(ls "${RL_ROOT}/${task}/round${ROUND}/traj/"*.npz 2>/dev/null | wc -l)
+  # mkdir first: `find` on a missing path exits 1 and would kill the run under
+  # `set -e` (that is what stopped the previous launch after beat_block_hammer).
+  traj_dir="${RL_ROOT}/${task}/round${ROUND}/traj"
+  mkdir -p "${traj_dir}"
+  have=$(find "${traj_dir}" -maxdepth 1 -name '*.npz' 2>/dev/null | wc -l)
   if [[ "${TARGET_SUCCESS}" -gt 0 && "${have}" -ge "${TARGET_SUCCESS}" ]]; then
     log "SKIP ${task}: already ${have}/${TARGET_SUCCESS} npz"; continue
   fi
@@ -122,7 +126,7 @@ for task in "${TASKS[@]}"; do
     WPIDS+=($!)
   done
   for pid in "${WPIDS[@]}"; do wait "${pid}" || true; done
-  n=$(ls "${RL_ROOT}/${task}/round${ROUND}/traj/"*.npz 2>/dev/null | wc -l)
+  n=$(find "${traj_dir}" -maxdepth 1 -name '*.npz' 2>/dev/null | wc -l)
   log "DONE ${task}: ${n} traj npz"
 done
 
